@@ -11,7 +11,7 @@
     var imagedict = {}
     var dayHourDict = {}
     var margins = {top: 0, bottom: 30, left:100, right:0}
-    var width = 1200 - margins.left - margins.right
+    var width = 900 - margins.left - margins.right
     var height = 200 - margins.bottom - margins.top
     var svg, imageSvg
     var Days = [ "Tue", "Wed", "Thu", "Fri", "Sat", "Sun", "Mon"]
@@ -26,6 +26,30 @@
     var binSet = {}
     var numColumns = Math.floor(width / (picWidth + picPadding))
 
+  // from http://bl.ocks.org/mbostock/7555321
+  function wrap(text, width) {
+    text.each(function() {
+      var text = d3.select(this),
+          words = text.text().split(/\s+/).reverse(),
+          word,
+          line = [],
+          lineNumber = 0,
+          lineHeight = 1.1, // ems
+          y = text.attr("y"),
+          dy = parseFloat(text.attr("dy")),
+          tspan = text.text(null).append("tspan").attr("x", 0).attr("y", y).attr("dy", dy + "em");
+      while (word = words.pop()) {
+        line.push(word);
+        tspan.text(line.join(" "));
+        if (tspan.node().getComputedTextLength() > width) {
+          line.pop();
+          tspan.text(line.join(" "));
+          line = [word];
+          tspan = text.append("tspan").attr("x", 0).attr("y", y).attr("dy", ++lineNumber * lineHeight + dy + "em").text(word);
+        }
+      }
+    });
+  }
     // image preloading and populating image dictionary
     var preloadImages = function() {
       d3.tsv("fileNames.txt", function(error, data) {
@@ -63,7 +87,7 @@
 
     // load & filter twitter data. create the normalized day hour property the histogram will be based on
     var loadTweetsAndDraw = function() {
-      d3.csv("cxnats.csv", function(error, data) {
+      d3.csv("cxnats_500.csv", function(error, data) {
         console.log("reading cxnats.csv")
         if (error) {
           console.log(error);
@@ -198,7 +222,7 @@
       svg = d3.select("body")
         .append("svg")
           .attr("width", width + margins.left + margins.right)
-          .attr("height", height + margins.top + margins.bottom + 40)
+          .attr("height", height + margins.top + margins.bottom + 70)
           .attr("class", "main")
         .append("g")
         .attr("transform", "translate(" + margins.left + "," + margins.top + ")")
@@ -262,7 +286,7 @@
    
       var y = d3.scale.linear()
       .domain([0, d3.max(histogram.map(function(d) { return d.y; }))])
-      .range([height, 0]);
+      .range([height, 10]);
 
       var yAxis = d3.svg.axis()
         .scale(y)
@@ -291,10 +315,12 @@
       .call(xAxis)
       .attr("class", "axis")
       .attr("transform", "translate(0," + (height + margins.bottom) + ")")
+    .selectAll(".tick text")
+      .call(wrap, 5*xBand.rangeBand())
       .append("text")
         .attr("text-anchor", "left")
         .attr("transform", "translate(0, 20)")
-        .text("Created by @gizm0_0")
+        //.text("Created by @gizm0_0")
 
 
 
